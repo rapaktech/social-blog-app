@@ -1,0 +1,15 @@
+Authentication
+- Sign Up - POST - '/auth/signup'
+- Login - POST - '/auth/signin'
+
+Post
+- Create Post - POST - '/post'
+- View All Posts- GET - '/post'
+- View Post - GET - '/post/:userId/:postId'
+- Edit Post - PATCH - '/post/:userId/:postId'
+- Delete Post - DELETE - '/post/:userId/:postId'
+
+Profile Management
+- View Profile - GET - '/user/:userId'
+- Edit Profile - PATCH - '/user/:userId'
+- Delete Profile - DELETE - '/user/:userId'

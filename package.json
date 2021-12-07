@@ -1,0 +1,25 @@
+{
+  "name": "social-blog-app",
+  "version": "1.0.0",
+  "description": "A social Interaction Blog",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "Jim Ezesinachi",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.0.14",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "jest": "^27.4.3",
+    "nodemon": "^2.0.15"
+  }
+}
