@@ -1,10 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const saltRounds = Number(process.env.SALT_ROUNDS);
 const morgan = require('morgan');
 const app = express();
 const User = require('./models/user');
 const Post = require('./models/post');
+const auth = require('./middleware/auth');
 
 require('dotenv').config();
 const port = process.env.PORT;
@@ -24,8 +27,10 @@ app.post('/auth/signup', async (req, res) => {
     const data = req.body;
 
     try {
+        const hashedPassword = await bcrypt.hash(data.password, saltRounds);
+        data.password = hashedPassword;
         const user = await new User({ ...data }).save();
-        const token = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn: 600 });
+        const token = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn: '1h' });
         user.password = null;
         return res.status(201).json({ message: "User Created Successfully!", token, user });
     } catch (error) {
@@ -38,8 +43,9 @@ app.post('/auth/signin', async (req, res) => {
 
     try {
         const user = await User.findOne({ email: data.email });
-        if (!user || user.password != data.password) return res.status(400).json({ message: "Invalid Email Or Password" });
-        const token = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn: 600 });
+        const isValidPassword = bcrypt.compare(data.password, user.password);
+        if (!user || !isValidPassword) return res.status(400).json({ message: "Invalid Email Or Password" });
+        const token = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn: '1h' });
         user.password = null;
         return res.status(201).json({ message: "User Logged In Successfully!", token, user });
     } catch (error) {
@@ -47,18 +53,20 @@ app.post('/auth/signin', async (req, res) => {
     }
 });
 
-app.post('/post', async (req, res) => {
+app.post('/post', auth(), async (req, res) => {
     const data = req.body;
+    data.userId = req.USER_ID;
 
     try {
         const post = await new Post({ ...data }).save();
         return res.status(201).json({ message: "Post Created Successfully!", post });
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ message: "Some Error Occured. Please Try Again Later!" });
     }
 });
 
-app.get('/post', async (req, res) => {
+app.get('/post', auth(), async (req, res) => {
     try {
         const posts = await Post.find().populate("userId", "email fullName");
         return res.status(201).json({ message: "All Posts: ", posts });
@@ -68,9 +76,9 @@ app.get('/post', async (req, res) => {
     }
 });
 
-app.get('/post/:userId/:postId', async (req, res) => {
+app.get('/post/:postId', auth(), async (req, res) => {
     const postId = req.params.postId;
-    const userId = req.params.userId;
+    const userId = req.USER_ID;
 
     try {
         const post = await Post.findOne({ _id: postId, userId: userId }).populate("userId", "email fullName");
@@ -82,10 +90,10 @@ app.get('/post/:userId/:postId', async (req, res) => {
     }
 });
 
-app.patch('/post/:userId/:postId', async (req, res) => {
+app.patch('/post/:postId', auth(), async (req, res) => {
     const data = req.body;
     const postId = req.params.postId;
-    const userId = req.params.userId;
+    const userId = req.USER_ID;
 
     try {
         const post = await Post.findOne({ _id: postId, userId: userId });
@@ -113,9 +121,9 @@ app.patch('/post/:userId/:postId', async (req, res) => {
     }
 });
 
-app.delete('/post/:userId/:postId', async (req, res) => {
+app.delete('/post/:postId', auth(), async (req, res) => {
     const postId = req.params.postId;
-    const userId = req.params.userId;
+    const userId = req.USER_ID;
 
     try {
         const post = await Post.findOne({ _id: postId, userId: userId });
@@ -128,8 +136,8 @@ app.delete('/post/:userId/:postId', async (req, res) => {
     }
 });
 
-app.get('/user/:userId', async (req, res) => {
-    const userId = req.params.userId;
+app.get('/user', auth(), async (req, res) => {
+    const userId = req.USER_ID;
 
     try {
         const user = await User.findById(userId);
@@ -142,9 +150,9 @@ app.get('/user/:userId', async (req, res) => {
     }
 });
 
-app.patch('/user/:userId', async (req, res) => {
+app.patch('/user', auth(), async (req, res) => {
     const data = req.body;
-    const userId = req.params.userId;
+    const userId = req.USER_ID;
 
     try {
         const user = await User.findById(userId);
@@ -170,8 +178,8 @@ app.patch('/user/:userId', async (req, res) => {
     }
 });
 
-app.delete('/user/:userId', async (req, res) => {
-    const userId = req.params.userId;
+app.delete('/user', auth(), async (req, res) => {
+    const userId = req.USER_ID;
 
     try {
         const user = await User.findById(userId);
@@ -184,10 +192,19 @@ app.delete('/user/:userId', async (req, res) => {
     }
 });
 
+app.use('**', (req, res)=> {
+    return res.status(400).json({ message: 'Page Not Found!'});
+});
+
+app.use((error, req, res, next)=> {
+    console.log(error);
+    return res.status(500).json({ message: 'Some Error Occured. Please Try Again Later!' });
+});
 
 app.listen(port, async () => {
     try {
-        await mongoose.connect(mongoURI).then(console.log("Database Connection Successful!")).catch(console.log('Database Connection failed!'));
+        await mongoose.connect(mongoURI);
+        console.log("Database Connection Successful!");
     } catch (error) {
         console.error(error);
     }

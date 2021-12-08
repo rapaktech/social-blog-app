@@ -1,15 +1,15 @@
 Authentication
-- Sign Up - POST - '/auth/signup'
-- Login - POST - '/auth/signin'
+- Sign Up - POST - '/auth/signup/'
+- Login - POST - '/auth/signin/'
 
 Post
-- Create Post - POST - '/post'
-- View All Posts- GET - '/post'
-- View Post - GET - '/post/:userId/:postId'
-- Edit Post - PATCH - '/post/:userId/:postId'
-- Delete Post - DELETE - '/post/:userId/:postId'
+- Create Post - POST - '/post/'
+- View All Posts- GET - '/post/'
+- View Post - GET - '/post/:postId/'
+- Edit Post - PATCH - '/post/:postId/'
+- Delete Post - DELETE - '/post/:postId/'
 
 Profile Management
-- View Profile - GET - '/user/:userId'
-- Edit Profile - PATCH - '/user/:userId'
-- Delete Profile - DELETE - '/user/:userId'
+- View Profile - GET - '/user/'
+- Edit Profile - PATCH - '/user/'
+- Delete Profile - DELETE - '/user/'
