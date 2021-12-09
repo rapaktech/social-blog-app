@@ -43,7 +43,7 @@ app.post('/auth/signin', async (req, res) => {
 
     try {
         const user = await User.findOne({ email: data.email });
-        const isValidPassword = bcrypt.compare(data.password, user.password);
+        const isValidPassword = await bcrypt.compare(data.password, user.password);
         if (!user || !isValidPassword) return res.status(400).json({ message: "Invalid Email Or Password" });
         const token = jwt.sign({ userId: user._id }, jwtSecretKey, { expiresIn: '1h' });
         user.password = null;
